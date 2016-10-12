@@ -629,7 +629,8 @@ function turnitintooltwo_cron_update_gradbook($assignment, $task) {
         $turnitintooltwoassignment->turnitintooltwo->course);
 
     if ($cm) {
-        $users = $turnitintooltwoassignment->get_moodle_course_users($cm);
+        $users = get_enrolled_users(context_module::instance($cm->id),
+                                'mod/turnitintooltwo:submit', groups_get_activity_group($cm), 'u.id');
 
         foreach ($users as $user) {
             $fieldList = array('turnitintooltwoid' => $turnitintooltwoassignment->turnitintooltwo->id,
@@ -1380,7 +1381,6 @@ function turnitintooltwo_print_overview($courses, &$htmlarray) {
         $partsarray = array();
         $grader = has_capability('mod/turnitintooltwo:grade', $context);
         if ($grader) {
-            $allusers = get_users_by_capability($context, 'mod/turnitintooltwo:submit', 'u.id', '', '', '', 0, '', false);
             $submissionsquery = $DB->get_records_select('turnitintooltwo_submissions',
                             'turnitintooltwoid = ? GROUP BY id, submission_part, submission_grade, submission_gmimaged',
                             array($turnitintooltwo->id), '', 'id, submission_part, submission_grade, submission_gmimaged');
@@ -1411,7 +1411,7 @@ function turnitintooltwo_print_overview($courses, &$htmlarray) {
                 $input = new stdClass();
                 $input->submitted = $numsubmissions;
                 $input->graded = $graded;
-                $input->total = count($allusers);
+                $input->total = count_enrolled_users($context, 'mod/turnitintooltwo:submit', 0);
                 $input->gplural = ($graded != 1) ? 's' : '';
                 $partsarray[$part->id]['status'] = get_string('tutorstatus', 'turnitintooltwo', $input);
             } else {
