@@ -1537,6 +1537,7 @@ class turnitintooltwo_assignment {
         $turnitincomms = new turnitintooltwo_comms();
         $turnitincall = $turnitincomms->initialise_api();
 
+        turnitintooltwo_activitylog('Updating submissions from Tii', 'TII_DEBUGGING');
         try {
             $submission = new TiiSubmission();
             $submission->setSubmissionIds(array_slice($_SESSION["TiiSubmissions"][$part->id], $start,
@@ -1546,8 +1547,11 @@ class turnitintooltwo_assignment {
             $readsubmissions = $response->getSubmissions();
 
             foreach ($readsubmissions as $readsubmission) {
+                turnitintooltwo_activitylog('Submission id: '.$readsubmission->getSubmissionId(), 'TII_DEBUGGING');
                 $turnitintooltwosubmission = new turnitintooltwo_submission($readsubmission->getSubmissionId(),
                                                                                 "turnitin", $this, $part->id);
+
+                turnitintooltwo_activitylog('Saving submission: '.$readsubmission->getSubmissionId(), 'TII_DEBUGGING');
                 $turnitintooltwosubmission->save_updated_submission_data($readsubmission, true);
             }
 

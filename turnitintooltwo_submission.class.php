@@ -674,10 +674,12 @@ class turnitintooltwo_submission {
         $submission = new TiiSubmission();
         $submission->setSubmissionId($this->submission_objectid);
 
+        turnitintooltwo_activitylog('Updating submission id from Tii: '.$this->submission_objectid, 'TII_DEBUGGING');
         try {
             $response = $turnitincall->readSubmission($submission);
             $readsubmission = $response->getSubmission();
 
+            turnitintooltwo_activitylog('Saving submission: '.$this->submission_objectid, 'TII_DEBUGGING');
             $this->save_updated_submission_data($readsubmission, false, $save);
             $this->get_submission_details();
         } catch (Exception $e) {
@@ -746,9 +748,11 @@ class turnitintooltwo_submission {
         $cm = get_coursemodule_from_instance("turnitintooltwo", $turnitintooltwoassignment->turnitintooltwo->id,
                                                                 $turnitintooltwoassignment->turnitintooltwo->course);
 
+        turnitintooltwo_activitylog('Attempting to save submission '.$this->submission_objectid.'? '.($save) ? 'true' : 'false', 'TII_DEBUGGING');
         if ($save) {
             // If the user is not a moodle user then get their name from Tii - only do this on initial save.
             $sub->userid = turnitintooltwo_user::get_moodle_user_id($tiisubmissiondata->getAuthorUserId());
+            turnitintooltwo_activitylog('Getting Moodle user id: '.$sub->userid, 'TII_DEBUGGING');
 
             // If we have no user ID get it from the Moodle database by using their Turnitin e-mail address.
             if ($sub->userid == 0) {
@@ -760,6 +764,7 @@ class turnitintooltwo_submission {
                 }
             }
 
+            turnitintooltwo_activitylog('Check User enrolled: '.$sub->userid, 'TII_DEBUGGING');
             // Check if the user is enrolled.
             if ($sub->userid != 0) {
                 $context = context_module::instance($cm->id);
@@ -772,6 +777,7 @@ class turnitintooltwo_submission {
             }
 
             if ($sub->userid == 0 && empty($this->id)) {
+                turnitintooltwo_activitylog('Getting Author: '.$tiisubmissiondata->getAuthorUserId(), 'TII_DEBUGGING');
                 if ($tiisubmissiondata->getAuthorUserId() > 0) {
                     $sub->submission_nmuserid = $tiisubmissiondata->getAuthorUserId();
                     $tmpuser = new turnitintooltwo_user(0);
@@ -787,6 +793,7 @@ class turnitintooltwo_submission {
                 }
             }
 
+            turnitintooltwo_activitylog('About to save submission: '.$this->id, 'TII_DEBUGGING');
             if (!empty($this->id)) {
                 $sub->id = $this->id;
                 $DB->update_record("turnitintooltwo_submissions", $sub, $bulk);
@@ -797,6 +804,7 @@ class turnitintooltwo_submission {
             // Update gradebook.
             @include_once($CFG->libdir."/gradelib.php");
             if ($sub->userid > 0 && $sub->submission_unanon) {
+                turnitintooltwo_activitylog('Attempting to update Gradebook for user: '.$sub->userid, 'TII_DEBUGGING');
                 $user = new turnitintooltwo_user($sub->userid, "Learner");
 
                 $grades = new stdClass();
@@ -817,6 +825,7 @@ class turnitintooltwo_submission {
                 $grades->userid = $user->id;
                 $params['idnumber'] = $cm->idnumber;
 
+                turnitintooltwo_activitylog('About to update Gradebook for user: '.$sub->userid, 'TII_DEBUGGING');
                 grade_update('mod/turnitintooltwo', $turnitintooltwoassignment->turnitintooltwo->course, 'mod',
                                 'turnitintooltwo', $turnitintooltwoassignment->turnitintooltwo->id, 0, $grades, $params);
             }
