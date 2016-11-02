@@ -752,14 +752,16 @@ class turnitintooltwo_submission {
         if ($save) {
             // If the user is not a moodle user then get their name from Tii - only do this on initial save.
             $sub->userid = turnitintooltwo_user::get_moodle_user_id($tiisubmissiondata->getAuthorUserId());
-            turnitintooltwo_activitylog('Getting Moodle user id: '.$sub->userid, 'TII_DEBUGGING');
+            turnitintooltwo_activitylog('Got Moodle user id: '.$sub->userid, 'TII_DEBUGGING');
 
             // If we have no user ID get it from the Moodle database by using their Turnitin e-mail address.
             if ($sub->userid == 0) {
                 $tmpuser = new turnitintooltwo_user(0);
                 $tmpuser->tii_user_id = $tiisubmissiondata->getAuthorUserId();
+                turnitintooltwo_activitylog('Get Moodle user id from email', 'TII_DEBUGGING');
                 $tiiuser = $tmpuser->set_user_values_from_tii();
                 if ($userrecord = $DB->get_record('user', array('email' => $tiiuser["email"]))) {
+                    turnitintooltwo_activitylog('Got Moodle user id: '.$userrecord->id, 'TII_DEBUGGING');
                     $sub->userid = $userrecord->id;
                 }
             }
@@ -770,6 +772,7 @@ class turnitintooltwo_submission {
                 $context = context_module::instance($cm->id);
                 if (!is_enrolled($context, $sub->userid)) {
                     // Enroll the user as a student.
+                    turnitintooltwo_activitylog('Enrolling user in Moodle Course: '.$sub->userid, 'TII_DEBUGGING');
                     $enrol = enrol_get_plugin('manual');
                     $instance = $DB->get_record("enrol", array('courseid'=> $cm->course, 'enrol'=>'manual'));
                     $enrol->enrol_user($instance, $sub->userid, 5);
@@ -783,10 +786,12 @@ class turnitintooltwo_submission {
                     $tmpuser = new turnitintooltwo_user(0);
                     $tmpuser->tii_user_id = $tiisubmissiondata->getAuthorUserId();
                     $tiiuser = $tmpuser->set_user_values_from_tii();
+                    turnitintooltwo_activitylog('Getting Author: Case A', 'TII_DEBUGGING');
 
                     $sub->submission_nmfirstname = $tiiuser["firstname"];
                     $sub->submission_nmlastname = $tiiuser["lastname"];
                 } else {
+                    turnitintooltwo_activitylog('Getting Author: Case B', 'TII_DEBUGGING');
                     $sub->submission_nmuserid = "nm-".$tiisubmissiondata->getAuthorUserId();
                     $sub->submission_nmfirstname = '';
                     $sub->submission_nmlastname = get_string('nonmoodleuser', 'turnitintooltwo');
